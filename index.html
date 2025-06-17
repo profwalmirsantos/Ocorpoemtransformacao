@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atividades Interativas para João Paulo</title>
+    <title>Conhecendo o Corpo em Transformação</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -25,19 +25,22 @@
         .selectable-word.selected { background-color: #a7f3d0; border: 1px solid #34d399; }
         .correct-selected { background-color: #86efac; border: 1px solid #22c55e; }
         .incorrect-selected { background-color: #fca5a5; border: 1px solid #ef4444; }
+        .timeline-item { cursor: grab; }
+        .timeline-slot { border: 2px dashed #cbd5e1; min-height: 80px; }
+        .timeline-slot.over { border-color: #4f46e5; background-color: #e0e7ff; }
     </style>
 </head>
 <body class="bg-amber-50 text-slate-800">
 
     <!-- Chosen Palette: Calm Harmony (Amber, Slate, Indigo, Green) -->
     <!-- Application Structure Plan: A dashboard-style single-page application. The main screen features a grid of 10 interactive cards, each representing one of the proposed activities for João Paulo. Clicking a card hides the main grid and displays a full-screen view of the selected activity, providing an immersive, focused experience. A clear "Voltar" button allows easy navigation back to the main menu. This structure was chosen for its simplicity and visual organization, which is ideal for a tablet interface and aligns with the user's need for structured, predictable, and distraction-free learning environments. It allows the educator or the student to easily select and engage with one activity at a time. -->
-    <!-- Visualization & Content Choices: The source document describes 10 educational activities, not traditional data for charting. Therefore, standard charts (like bar or line) are not applicable. Instead, the focus is on creating interactive components that embody the goal of each activity. Goals like 'Organize', 'Compare', and 'Inform' are achieved through interactive HTML/CSS/JS components. For example: Activity 1 (Muro de Palavras) uses a drag-and-drop interface (Goal: Organize/Compare). Activity 3 (Jogo da Memoria) uses a card-flipping game (Goal: Inform/Relate). Activity 5 (Quiz) uses a multiple-choice format (Goal: Inform). Activity 2 (Linha do Tempo Visual) displays a chronological sequence. Activity 4 (Construindo Frases) uses dropdowns for sentence completion. Activity 6 (Cenas Míticas) involves image analysis with simple text inputs. Activity 7 (Bingo de Palavras) is a word-matching game. Activity 9 (Ações e Consequências) pairs actions with outcomes. Activity 10 (Detetive de Palavras) allows word highlighting in text. All interactions are built with vanilla JavaScript to keep the application self-contained and performant. Chart.js is not used as there is no data to chart. -->
+    <!-- Visualization & Content Choices: The source document describes 10 educational activities, not traditional data for charting. Therefore, standard charts (like bar or line) are not applicable. Instead, the focus is on creating interactive components that embody the goal of each activity. Goals like 'Organize', 'Compare', and 'Inform' are achieved through interactive HTML/CSS/JS components. For example: Activity 1 (Muro de Palavras) uses a drag-and-drop interface (Goal: Organize/Compare). Activity 3 (Jogo da Memoria) uses a card-flipping game (Goal: Inform/Relate). Activity 5 (Quiz) uses a multiple-choice format (Goal: Inform). Activity 2 (Linha do Tempo Visual) displays a chronological sequence with draggable elements for reordering. Activity 4 (Construindo Frases) uses dropdowns for sentence completion. Activity 6 (Cenas Míticas) involves image analysis with simple text inputs. Activity 7 (Bingo de Palavras) is a word-matching game. Activity 9 (Ações e Consequências) pairs actions with outcomes. Activity 10 (Detetive de Palavras) allows word highlighting in text. All interactions are built with vanilla JavaScript to keep the application self-contained and performant. Chart.js is not used as there is no data to chart. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 
     <div id="app" class="min-h-screen p-4 sm:p-6 lg:p-8">
         <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">Atividades Interativas para João Paulo</h1>
-            <p class="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">Uma coleção de atividades baseadas no capítulo "O corpo em transformação", desenhadas para serem visuais, estruturadas e divertidas.</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">Capítulo 5: O Corpo em Transformação</h1>
+            <p class="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">Olá, João Paulo! Que bom ter você aqui. Explore as atividades interativas sobre o capítulo "O corpo em transformação" e descubra um mundo de conhecimentos!</p>
         </header>
 
         <main id="main-menu">
@@ -211,34 +214,111 @@
 
             function setupLinhaDoTempoVisual(container) {
                 const events = [
-                    { year: 'Século I d.C.', text: 'Juvenal: "Mens Sana in Corpore Sano"', icon: '📜' },
-                    { year: 'Século II a.C.', text: 'Vênus de Milo', icon: '🗿' },
-                    { year: 'Século XIII d.C.', text: 'Tomás de Aquino: Corpo e Alma', icon: '📚' },
-                    { year: 'Antiguidade', text: 'Budismo: Impermanência do Corpo', icon: '🧘' },
-                    { year: 'Origens', text: 'Tradições Afro-Brasileiras: Corpo e Sagrado', icon: '🌿' }
-                ].sort((a, b) => {
-                    const yearA = parseInt(a.year.match(/\d+/)) || Infinity;
-                    const yearB = parseInt(b.year.match(/\d+/)) || Infinity;
-                    const eraA = a.year.includes('a.C.') ? -1 : 1;
-                    const eraB = b.year.includes('a.C.') ? -1 : 1;
-                    return (eraA * yearA) - (eraB * yearB);
-                });
+                    { id: 'e1', year: 'Século II a.C.', text: 'Vênus de Milo', icon: '🗿' },
+                    { id: 'e2', year: 'Século I d.C.', text: 'Juvenal: "Mens Sana in Corpore Sano"', icon: '📜' },
+                    { id: 'e3', year: 'Século XIII d.C.', text: 'Tomás de Aquino: Corpo e Alma', icon: '📚' },
+                    { id: 'e4', year: 'Antiguidade', text: 'Budismo: Impermanência do Corpo', icon: '🧘' },
+                    { id: 'e5', year: 'Origens', text: 'Tradições Afro-Brasileiras: Corpo e Sagrado', icon: '🌿' }
+                ];
+                
+                // Define a ordem cronológica correta dos IDs dos eventos
+                const correctOrderIds = ['e1', 'e2', 'e4', 'e5', 'e3']; 
+
+                let draggableEvents = [...events].sort(() => 0.5 - Math.random()); // Randomize for the student to order
 
                 let html = `
-                    <div class="flex flex-col gap-4">
-                        <h4 class="font-bold text-center mb-4">Marcos na Percepção do Corpo</h4>
-                        ${events.map(event => `
-                            <div class="flex items-center gap-4 bg-slate-100 p-3 rounded-lg shadow-sm">
-                                <div class="text-3xl">${event.icon}</div>
-                                <div class="flex-grow">
-                                    <span class="font-semibold text-indigo-700">${event.year}:</span>
-                                    <span class="text-slate-800">${event.text}</span>
-                                </div>
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <div id="events-pool" class="w-full lg:w-1/3 bg-slate-100 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2">Eventos para Organizar</h4>
+                            <div class="flex flex-col gap-2">
+                                ${draggableEvents.map(event => `
+                                    <div id="${event.id}" class="timeline-item draggable bg-white p-2 rounded shadow cursor-grab flex items-center gap-2" draggable="true">
+                                        <div class="text-xl">${event.icon}</div>
+                                        <span>${event.year}: ${event.text}</span>
+                                    </div>
+                                `).join('')}
                             </div>
-                        `).join('')}
+                        </div>
+                        <div class="w-full lg:w-2/3 bg-indigo-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-indigo-800 mb-2 text-center">Linha do Tempo (Arraste para cá)</h4>
+                            <div id="timeline-slots" class="flex flex-col gap-3 p-2 rounded-lg min-h-[300px]">
+                                ${Array(events.length).fill().map((_, i) => `
+                                    <div class="timeline-slot p-2 rounded-lg flex items-center justify-center text-slate-400">
+                                        Slot ${i + 1}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button id="check-order-button" class="mt-4 px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-bold w-full">Verificar Ordem</button>
+                            <div id="timeline-feedback" class="mt-4 text-center font-semibold text-lg h-6"></div>
+                        </div>
                     </div>
                 `;
                 container.innerHTML = html;
+
+                const timelineItems = container.querySelectorAll('.timeline-item');
+                const timelineSlots = container.querySelectorAll('.timeline-slot');
+                let draggedItem = null;
+
+                timelineItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggedItem = e.target;
+                        setTimeout(() => e.target.style.display = 'none', 0);
+                    });
+                    item.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            if (draggedItem) draggedItem.style.display = 'flex';
+                            draggedItem = null;
+                        }, 0);
+                    });
+                });
+
+                timelineSlots.forEach(slot => {
+                    slot.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        const dragging = document.querySelector('.timeline-item.dragging');
+                        if (dragging && dragging !== e.target && e.target.classList.contains('timeline-slot')) {
+                            slot.classList.add('over');
+                        }
+                    });
+                    slot.addEventListener('dragleave', () => slot.classList.remove('over'));
+                    slot.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        slot.classList.remove('over');
+                        if (draggedItem && slot.children.length === 0) {
+                            slot.innerHTML = ''; // Clear "Slot X" text
+                            slot.appendChild(draggedItem);
+                        } else if (draggedItem && slot.firstElementChild) {
+                            // Swap if dropping on another item
+                            const sourceParent = draggedItem.parentNode;
+                            const targetItem = slot.firstElementChild;
+                            sourceParent.appendChild(targetItem);
+                            slot.appendChild(draggedItem);
+                        }
+                    });
+                });
+
+                document.getElementById('check-order-button').addEventListener('click', () => {
+                    const currentOrder = Array.from(container.querySelectorAll('.timeline-slot')).map(slot => {
+                        return slot.firstElementChild ? slot.firstElementChild.id : null;
+                    }).filter(id => id !== null);
+
+                    const feedbackEl = document.getElementById('timeline-feedback');
+                    if (currentOrder.length !== correctOrderIds.length) {
+                        feedbackEl.textContent = 'Por favor, arraste todos os itens para a linha do tempo.';
+                        feedbackEl.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+                        return;
+                    }
+
+                    const isCorrect = correctOrderIds.every((id, index) => id === currentOrder[index]);
+
+                    if (isCorrect) {
+                        feedbackEl.textContent = 'Parabéns, a ordem está correta! ✅';
+                        feedbackEl.className = 'mt-4 text-center font-semibold text-lg text-green-600';
+                    } else {
+                        feedbackEl.textContent = 'A ordem está incorreta. Tente novamente! ❌';
+                        feedbackEl.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+                    }
+                });
             }
 
             function setupJogoDaMemoria(container) {
