@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividades Interativas para João Paulo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .activity-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .activity-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .activity-view { display: none; }
+        .draggable { cursor: grab; }
+        .drop-zone { border: 2px dashed #cbd5e1; min-height: 100px; }
+        .drop-zone.over { border-color: #4f46e5; background-color: #e0e7ff; }
+        .correct-drop { border: 2px solid #22c55e; }
+        .memory-card { perspective: 1000px; }
+        .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .memory-card.is-flipped .memory-card-inner { transform: rotateY(180deg); }
+        .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+        .memory-card-back { transform: rotateY(180deg); }
+        .selectable-word { cursor: pointer; padding: 2px 4px; border-radius: 4px; display: inline-block; }
+        .selectable-word.selected { background-color: #a7f3d0; border: 1px solid #34d399; }
+        .correct-selected { background-color: #86efac; border: 1px solid #22c55e; }
+        .incorrect-selected { background-color: #fca5a5; border: 1px solid #ef4444; }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-800">
+
+    <!-- Chosen Palette: Calm Harmony (Amber, Slate, Indigo, Green) -->
+    <!-- Application Structure Plan: A dashboard-style single-page application. The main screen features a grid of 10 interactive cards, each representing one of the proposed activities for João Paulo. Clicking a card hides the main grid and displays a full-screen view of the selected activity, providing an immersive, focused experience. A clear "Voltar" button allows easy navigation back to the main menu. This structure was chosen for its simplicity and visual organization, which is ideal for a tablet interface and aligns with the user's need for structured, predictable, and distraction-free learning environments. It allows the educator or the student to easily select and engage with one activity at a time. -->
+    <!-- Visualization & Content Choices: The source document describes 10 educational activities, not traditional data for charting. Therefore, standard charts (like bar or line) are not applicable. Instead, the focus is on creating interactive components that embody the goal of each activity. Goals like 'Organize', 'Compare', and 'Inform' are achieved through interactive HTML/CSS/JS components. For example: Activity 1 (Muro de Palavras) uses a drag-and-drop interface (Goal: Organize/Compare). Activity 3 (Jogo da Memoria) uses a card-flipping game (Goal: Inform/Relate). Activity 5 (Quiz) uses a multiple-choice format (Goal: Inform). Activity 2 (Linha do Tempo Visual) displays a chronological sequence. Activity 4 (Construindo Frases) uses dropdowns for sentence completion. Activity 6 (Cenas Míticas) involves image analysis with simple text inputs. Activity 7 (Bingo de Palavras) is a word-matching game. Activity 9 (Ações e Consequências) pairs actions with outcomes. Activity 10 (Detetive de Palavras) allows word highlighting in text. All interactions are built with vanilla JavaScript to keep the application self-contained and performant. Chart.js is not used as there is no data to chart. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <div id="app" class="min-h-screen p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">Atividades Interativas para João Paulo</h1>
+            <p class="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">Uma coleção de atividades baseadas no capítulo "O corpo em transformação", desenhadas para serem visuais, estruturadas e divertidas.</p>
+        </header>
+
+        <main id="main-menu">
+            <div id="activity-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            </div>
+        </main>
+
+        <div id="activity-container" class="mt-8">
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const activities = [
+                { id: 1, title: 'Muro de Palavras', icon: '🏛️', description: 'Arraste as palavras para as culturas corretas.' },
+                { id: 2, title: 'Linha do Tempo Visual', icon: '⏳', description: 'Organize os marcos históricos na ordem certa.' },
+                { id: 3, title: 'Jogo da Memória', icon: '🧠', description: 'Encontre os pares de conceitos e imagens.' },
+                { id: 4, title: 'Construindo Frases', icon: '✍️', description: 'Complete as frases com a opção correta.' },
+                { id: 5, title: 'Quiz Visual', icon: '❓', description: 'Responda às perguntas de Sim ou Não.' },
+                { id: 6, title: 'Cenas Míticas', icon: '🎨', description: 'Analise as obras de arte.' },
+                { id: 7, title: 'Bingo de Palavras', icon: '🎉', description: 'Marque as palavras sorteadas na sua cartela.' },
+                { id: 8, title: 'Organizando a Rotina', icon: '🧼', description: 'Monte uma rotina de cuidados com o corpo.' },
+                { id: 9, title: 'Ações e Consequências', icon: '⚖️', description: 'Combine a ação com sua consequência.' },
+                { id: 10, title: 'Detetive de Palavras', icon: '🔍', description: 'Encontre e marque as palavras no texto.' }
+            ];
+
+            const mainMenu = document.getElementById('main-menu');
+            const activityGrid = document.getElementById('activity-grid');
+            const activityContainer = document.getElementById('activity-container');
+            let currentActivity = null;
+
+            function showMainMenu() {
+                mainMenu.style.display = 'block';
+                activityContainer.innerHTML = '';
+                activityContainer.style.display = 'none';
+                currentActivity = null;
+            }
+
+            function showActivity(activity) {
+                mainMenu.style.display = 'none';
+                activityContainer.style.display = 'block';
+                currentActivity = activity;
+
+                const activityWrapper = document.createElement('div');
+                activityWrapper.className = 'activity-view w-full max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6';
+                activityWrapper.style.display = 'block';
+
+                let activityContent = `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-indigo-700">${activity.icon} ${activity.title}</h2>
+                        <button id="back-button" class="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300 font-semibold">Voltar</button>
+                    </div>
+                    <p class="text-slate-600 mb-6">${activity.description}</p>
+                    <div id="activity-content" class="border-t pt-6"></div>
+                `;
+                activityWrapper.innerHTML = activityContent;
+                activityContainer.appendChild(activityWrapper);
+                
+                document.getElementById('back-button').addEventListener('click', showMainMenu);
+                
+                loadActivityContent(activity.id);
+            }
+            
+            function createActivityCards() {
+                activities.forEach(activity => {
+                    const card = document.createElement('div');
+                    card.className = 'activity-card bg-white p-4 rounded-lg shadow-md cursor-pointer flex flex-col items-center justify-center text-center';
+                    card.innerHTML = `
+                        <div class="text-5xl mb-3">${activity.icon}</div>
+                        <h3 class="text-lg font-semibold text-slate-800">${activity.title}</h3>
+                    `;
+                    card.addEventListener('click', () => showActivity(activity));
+                    activityGrid.appendChild(card);
+                });
+            }
+
+            function loadActivityContent(id) {
+                const contentDiv = document.getElementById('activity-content');
+                switch(id) {
+                    case 1: setupMuroDePalavras(contentDiv); break;
+                    case 2: setupLinhaDoTempoVisual(contentDiv); break;
+                    case 3: setupJogoDaMemoria(contentDiv); break;
+                    case 4: setupConstruindoFrases(contentDiv); break;
+                    case 5: setupQuizVisual(contentDiv); break;
+                    case 6: setupCenasMiticas(contentDiv); break;
+                    case 7: setupBingoDePalavras(contentDiv); break;
+                    case 8: setupOrganizandoRotina(contentDiv); break;
+                    case 9: setupAcoesEConsequencias(contentDiv); break;
+                    case 10: setupDetetiveDePalavras(contentDiv); break;
+                    default: contentDiv.innerHTML = `<p class="text-center text-slate-500">Esta atividade não está disponível.</p>`;
+                }
+            }
+            
+            function setupMuroDePalavras(container) {
+                const data = {
+                    columns: [
+                        { id: 'greco-romano', title: 'Grego-Romano' },
+                        { id: 'budista', title: 'Budista' },
+                        { id: 'afro-brasileiro', title: 'Afro-Brasileiro' },
+                    ],
+                    words: [
+                        { id: 'w1', text: 'Atletismo', column: 'greco-romano' },
+                        { id: 'w2', text: 'Impermanência', column: 'budista' },
+                        { id: 'w3', text: 'Axé', column: 'afro-brasileiro' },
+                        { id: 'w4', text: 'Gladiador', column: 'greco-romano' },
+                        { id: 'w5', text: 'Vaidade', column: 'greco-romano' },
+                        { id: 'w6', text: 'Desencanto', column: 'budista' },
+                        { id: 'w7', text: 'Orixás', column: 'afro-brasileiro' },
+                    ]
+                };
+
+                let html = `
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <div id="words-pool" class="w-full lg:w-1/4 bg-slate-100 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2">Palavras</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${data.words.sort(() => 0.5 - Math.random()).map(word => `
+                                    <div id="${word.id}" data-column="${word.column}" class="draggable bg-white p-2 rounded shadow cursor-grab" draggable="true">${word.text}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="w-full lg:w-3/4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            ${data.columns.map(col => `
+                                <div class="bg-indigo-50 p-4 rounded-lg">
+                                    <h4 class="font-bold text-indigo-800 mb-2 text-center">${col.title}</h4>
+                                    <div id="col-${col.id}" class="drop-zone p-2 rounded-lg min-h-[200px] flex flex-col gap-2" data-accepts="${col.id}"></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = html;
+
+                const draggables = container.querySelectorAll('.draggable');
+                const dropZones = container.querySelectorAll('.drop-zone');
+                let draggedItem = null;
+
+                draggables.forEach(draggable => {
+                    draggable.addEventListener('dragstart', (e) => {
+                        draggedItem = e.target;
+                        setTimeout(() => e.target.style.display = 'none', 0);
+                    });
+
+                    draggable.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            draggedItem.style.display = 'block';
+                            draggedItem = null;
+                        }, 0);
+                    });
+                });
+
+                dropZones.forEach(zone => {
+                    zone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        zone.classList.add('over');
+                    });
+                    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+                    zone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        zone.classList.remove('over');
+                        if (draggedItem && zone.dataset.accepts === draggedItem.dataset.column) {
+                            zone.appendChild(draggedItem);
+                            draggedItem.classList.add('border-2', 'border-green-500');
+                            draggedItem.setAttribute('draggable', 'false');
+                            draggedItem.style.cursor = 'default';
+                        }
+                    });
+                });
+            }
+
+            function setupLinhaDoTempoVisual(container) {
+                const events = [
+                    { year: 'Século I d.C.', text: 'Juvenal: "Mens Sana in Corpore Sano"', icon: '📜' },
+                    { year: 'Século II a.C.', text: 'Vênus de Milo', icon: '🗿' },
+                    { year: 'Século XIII d.C.', text: 'Tomás de Aquino: Corpo e Alma', icon: '📚' },
+                    { year: 'Antiguidade', text: 'Budismo: Impermanência do Corpo', icon: '🧘' },
+                    { year: 'Origens', text: 'Tradições Afro-Brasileiras: Corpo e Sagrado', icon: '🌿' }
+                ].sort((a, b) => {
+                    const yearA = parseInt(a.year.match(/\d+/)) || Infinity;
+                    const yearB = parseInt(b.year.match(/\d+/)) || Infinity;
+                    const eraA = a.year.includes('a.C.') ? -1 : 1;
+                    const eraB = b.year.includes('a.C.') ? -1 : 1;
+                    return (eraA * yearA) - (eraB * yearB);
+                });
+
+                let html = `
+                    <div class="flex flex-col gap-4">
+                        <h4 class="font-bold text-center mb-4">Marcos na Percepção do Corpo</h4>
+                        ${events.map(event => `
+                            <div class="flex items-center gap-4 bg-slate-100 p-3 rounded-lg shadow-sm">
+                                <div class="text-3xl">${event.icon}</div>
+                                <div class="flex-grow">
+                                    <span class="font-semibold text-indigo-700">${event.year}:</span>
+                                    <span class="text-slate-800">${event.text}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.innerHTML = html;
+            }
+
+            function setupJogoDaMemoria(container) {
+                const cardData = [
+                    { id: 1, concept: 'Morada do Sagrado', image: '🏛️' },
+                    { id: 2, concept: 'Desencanto pelo Corpo', image: '🧘' },
+                    { id: 3, concept: 'Energia Vital (Axé)', image: '⚡' },
+                    { id: 4, concept: 'Mente Sã, Corpo São', image: '💪' },
+                    { id: 5, concept: 'Culto ao Corpo', image: '🏋️' },
+                    { id: 6, concept: 'Purificação', image: '💧' },
+                ];
+                let gameCards = [...cardData, ...cardData].map((card, index) => ({...card, uniqueId: index}))
+                                                        .sort(() => 0.5 - Math.random());
+                
+                let html = `
+                    <div id="memory-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-4 max-w-xl mx-auto">
+                        ${gameCards.map(card => `
+                            <div class="memory-card h-24 sm:h-32" data-id="${card.id}">
+                                <div class="memory-card-inner rounded-lg shadow">
+                                    <div class="memory-card-front bg-indigo-500 flex items-center justify-center text-4xl font-bold text-white rounded-lg">?</div>
+                                    <div class="memory-card-back bg-white flex items-center justify-center rounded-lg p-2 text-center">
+                                        <span class="text-4xl sm:text-5xl">${card.image}</span>
+                                        <span class="text-xs absolute bottom-1">${card.concept}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div id="memory-message" class="text-center mt-4 font-semibold text-lg"></div>
+                `;
+                container.innerHTML = html;
+
+                const cards = container.querySelectorAll('.memory-card');
+                let flippedCards = [];
+                let lockBoard = false;
+                let pairsFound = 0;
+
+                cards.forEach(card => card.addEventListener('click', () => {
+                    if (lockBoard || card.classList.contains('is-flipped')) return;
+                    
+                    card.classList.add('is-flipped');
+                    flippedCards.push(card);
+
+                    if (flippedCards.length === 2) {
+                        lockBoard = true;
+                        if (flippedCards[0].dataset.id === flippedCards[1].dataset.id) {
+                            pairsFound++;
+                            flippedCards = [];
+                            lockBoard = false;
+                            if (pairsFound === cardData.length) {
+                                document.getElementById('memory-message').textContent = 'Parabéns, você encontrou todos os pares!';
+                                document.getElementById('memory-message').classList.add('text-green-600');
+                            }
+                        } else {
+                            setTimeout(() => {
+                                flippedCards[0].classList.remove('is-flipped');
+                                flippedCards[1].classList.remove('is-flipped');
+                                flippedCards = [];
+                                lockBoard = false;
+                            }, 1200);
+                        }
+                    }
+                }));
+            }
+
+            function setupConstruindoFrases(container) {
+                const sentences = [
+                    {
+                        start: "Na cultura grega, o corpo era valorizado pela...",
+                        options: ["beleza e simetria.", "sua impermanência.", "a morada dos orixás."],
+                        correct: "beleza e simetria."
+                    },
+                    {
+                        start: "Para o Budismo, o corpo é impermanente e...",
+                        options: ["fonte de vaidade.", "deve ser cuidado.", "um objeto de culto."],
+                        correct: "deve ser cuidado."
+                    },
+                    {
+                        start: "Nas tradições afro-brasileiras, o corpo é o elo com o...",
+                        options: ["sofrimento.", "Sagrado.", "o intelecto."],
+                        correct: "Sagrado."
+                    }
+                ];
+                let currentSentenceIndex = 0;
+
+                function renderSentence() {
+                    if (currentSentenceIndex >= sentences.length) {
+                        container.innerHTML = `<div class="text-center text-xl font-bold text-green-700">Todas as frases completas! 🎉</div>`;
+                        return;
+                    }
+
+                    const s = sentences[currentSentenceIndex];
+                    let optionsHtml = s.options.sort(() => 0.5 - Math.random()).map(option => `
+                        <button class="phrase-option bg-indigo-100 text-indigo-800 px-4 py-2 rounded-md hover:bg-indigo-200">${option}</button>
+                    `).join('');
+
+                    container.innerHTML = `
+                        <div class="bg-slate-100 p-6 rounded-lg mb-6">
+                            <p class="text-lg font-medium mb-4">${s.start}</p>
+                            <div id="options-container" class="flex flex-wrap gap-3 justify-center">
+                                ${optionsHtml}
+                            </div>
+                            <div id="feedback" class="mt-4 text-center font-semibold h-6"></div>
+                        </div>
+                    `;
+
+                    container.querySelectorAll('.phrase-option').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const selectedOption = e.target.textContent;
+                            const feedbackEl = document.getElementById('feedback');
+                            if (selectedOption === s.correct) {
+                                feedbackEl.textContent = 'Correto! ✅';
+                                feedbackEl.className = 'mt-4 text-center font-semibold h-6 text-green-600';
+                                setTimeout(() => {
+                                    currentSentenceIndex++;
+                                    renderSentence();
+                                }, 1500);
+                            } else {
+                                feedbackEl.textContent = 'Tente novamente. ❌';
+                                feedbackEl.className = 'mt-4 text-center font-semibold h-6 text-red-600';
+                            }
+                        });
+                    });
+                }
+                renderSentence();
+            }
+            
+            function setupQuizVisual(container) {
+                const questions = [
+                    { question: "Os gladiadores eram parte do culto ao corpo na Grécia Antiga?", image: "🏛️", answer: false },
+                    { question: "O Budismo ensina a ter vaidade e apego ao corpo?", image: "🧘", answer: false },
+                    { question: "O banho era visto como purificação em algumas tradições?", image: "💧", answer: true },
+                    { question: "A frase 'mente sã em corpo são' é de origem romana?", image: "📜", answer: true }
+                ];
+                let currentQuestionIndex = 0;
+                let score = 0;
+
+                function renderQuestion() {
+                    if (currentQuestionIndex >= questions.length) {
+                        container.innerHTML = `<div class="text-center">
+                            <h3 class="text-2xl font-bold">Quiz Finalizado!</h3>
+                            <p class="text-xl mt-2">Sua pontuação: ${score} de ${questions.length}</p>
+                            <button id="restart-quiz" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Recomeçar</button>
+                        </div>`;
+                        document.getElementById('restart-quiz').addEventListener('click', () => {
+                            currentQuestionIndex = 0;
+                            score = 0;
+                            renderQuestion();
+                        });
+                        return;
+                    }
+
+                    const q = questions[currentQuestionIndex];
+                    container.innerHTML = `
+                        <div class="text-center bg-slate-100 p-6 rounded-lg">
+                            <div class="text-6xl mb-4">${q.image}</div>
+                            <p class="text-xl font-medium mb-6">${q.question}</p>
+                            <div class="flex justify-center gap-4">
+                                <button data-answer="true" class="quiz-btn px-6 py-3 bg-green-500 text-white font-bold rounded-lg text-xl hover:bg-green-600">Sim</button>
+                                <button data-answer="false" class="quiz-btn px-6 py-3 bg-red-500 text-white font-bold rounded-lg text-xl hover:bg-red-600">Não</button>
+                            </div>
+                            <div id="feedback" class="mt-4 h-6 text-lg font-semibold"></div>
+                        </div>
+                    `;
+                    
+                    container.querySelectorAll('.quiz-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const userAnswer = e.target.dataset.answer === 'true';
+                            const feedbackEl = document.getElementById('feedback');
+                            if (userAnswer === q.answer) {
+                                feedbackEl.textContent = 'Correto! ✅';
+                                feedbackEl.className = 'mt-4 h-6 text-lg font-semibold text-green-600';
+                                score++;
+                            } else {
+                                feedbackEl.textContent = 'Incorreto. ❌';
+                                feedbackEl.className = 'mt-4 h-6 text-lg font-semibold text-red-600';
+                            }
+                            currentQuestionIndex++;
+                            setTimeout(renderQuestion, 1500);
+                        });
+                    });
+                }
+                
+                renderQuestion();
+            }
+
+            function setupCenasMiticas(container) {
+                const scenes = [
+                    {
+                        imageSrc: 'https://placehold.co/150x150/cbd5e1/475569?text=Vênus',
+                        title: 'Vênus de Milo',
+                        question: 'Qual aspecto do corpo era valorizado nesta escultura?',
+                        correctAnswer: 'beleza e perfeição'
+                    },
+                    {
+                        imageSrc: 'https://placehold.co/150x150/cbd5e1/475569?text=Narciso',
+                        title: 'Mito de Narciso',
+                        question: 'O que o mito de Narciso nos ensina sobre a relação com o corpo?',
+                        correctAnswer: 'perigo da vaidade'
+                    }
+                ];
+                let currentSceneIndex = 0;
+
+                function renderScene() {
+                    if (currentSceneIndex >= scenes.length) {
+                        container.innerHTML = `<div class="text-center text-xl font-bold text-green-700">Todas as cenas analisadas! 🎉</div>`;
+                        return;
+                    }
+
+                    const scene = scenes[currentSceneIndex];
+                    container.innerHTML = `
+                        <div class="text-center bg-slate-100 p-6 rounded-lg">
+                            <img src="${scene.imageSrc}" alt="Imagem de ${scene.title}" class="w-32 h-32 object-cover rounded-lg mb-4 mx-auto border border-slate-300">
+                            <h3 class="text-2xl font-bold text-indigo-700 mb-4">${scene.title}</h3>
+                            <p class="text-lg font-medium mb-4">${scene.question}</p>
+                            <input type="text" id="answer-input" class="w-full max-w-sm p-3 border border-slate-300 rounded-md text-center" placeholder="Digite sua resposta">
+                            <button id="check-answer" class="mt-4 px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-bold">Verificar</button>
+                            <div id="feedback" class="mt-4 h-6 text-lg font-semibold"></div>
+                        </div>
+                    `;
+
+                    document.getElementById('check-answer').addEventListener('click', () => {
+                        const userAnswer = document.getElementById('answer-input').value.toLowerCase().trim();
+                        const feedbackEl = document.getElementById('feedback');
+                        if (userAnswer.includes(scene.correctAnswer)) {
+                            feedbackEl.textContent = 'Correto! ✅';
+                            feedbackEl.className = 'mt-4 h-6 text-lg font-semibold text-green-600';
+                            setTimeout(() => {
+                                currentSceneIndex++;
+                                renderScene();
+                            }, 1500);
+                        } else {
+                            feedbackEl.textContent = 'Tente novamente. ❌';
+                            feedbackEl.className = 'mt-4 h-6 text-lg font-semibold text-red-600';
+                        }
+                    });
+                }
+                renderScene();
+            }
+
+            function setupBingoDePalavras(container) {
+                const chapterWords = ['corpo', 'alma', 'grego', 'romano', 'budismo', 'axé', 'saúde', 'vaidade', 'purificação', 'gladiador', 'imortalidade', 'impermanência', 'sagrado', 'ritual', 'mente'];
+                const numCells = 9; // 3x3 bingo card
+                let bingoCard = [];
+                let calledWords = [];
+
+                function generateBingoCard() {
+                    let shuffledWords = [...chapterWords].sort(() => 0.5 - Math.random());
+                    bingoCard = shuffledWords.slice(0, numCells);
+                    calledWords = [];
+                }
+
+                function renderBingoCard() {
+                    let cellsHtml = bingoCard.map(word => `
+                        <div class="bingo-cell w-24 h-24 sm:w-32 sm:h-32 bg-white rounded-lg shadow flex items-center justify-center text-lg font-semibold cursor-pointer border-2 border-slate-300" data-word="${word}">${word}</div>
+                    `).join('');
+
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center gap-6">
+                            <div id="bingo-grid" class="grid grid-cols-3 gap-4 max-w-lg mx-auto p-4 bg-indigo-50 rounded-lg shadow-md">
+                                ${cellsHtml}
+                            </div>
+                            <button id="call-word-btn" class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-bold">Sortear Palavra</button>
+                            <div id="called-word-display" class="text-3xl font-bold text-slate-800 h-10"></div>
+                            <div id="bingo-message" class="text-xl font-bold text-green-600"></div>
+                        </div>
+                    `;
+
+                    document.getElementById('call-word-btn').addEventListener('click', callRandomWord);
+                    container.querySelectorAll('.bingo-cell').forEach(cell => {
+                        cell.addEventListener('click', () => markCell(cell));
+                    });
+                }
+
+                function callRandomWord() {
+                    const availableWords = chapterWords.filter(word => !calledWords.includes(word));
+                    if (availableWords.length === 0) {
+                        document.getElementById('called-word-display').textContent = 'Todas as palavras sorteadas!';
+                        return;
+                    }
+                    const randomIndex = Math.floor(Math.random() * availableWords.length);
+                    const word = availableWords[randomIndex];
+                    calledWords.push(word);
+                    document.getElementById('called-word-display').textContent = word.toUpperCase();
+                }
+
+                function markCell(cell) {
+                    const word = cell.dataset.word;
+                    if (calledWords.includes(word) && !cell.classList.contains('bg-green-400')) {
+                        cell.classList.add('bg-green-400', 'border-green-600');
+                        checkBingo();
+                    }
+                }
+
+                function checkBingo() {
+                    const cells = Array.from(container.querySelectorAll('.bingo-cell'));
+                    const markedCells = cells.filter(cell => cell.classList.contains('bg-green-400'));
+                    
+                    const grid = [];
+                    for (let i = 0; i < 3; i++) {
+                        grid.push(cells.slice(i * 3, (i * 3) + 3));
+                    }
+
+                    let bingo = false;
+                    // Check rows
+                    for (let i = 0; i < 3; i++) {
+                        if (grid[i].every(cell => cell.classList.contains('bg-green-400'))) bingo = true;
+                    }
+                    // Check columns
+                    for (let i = 0; i < 3; i++) {
+                        if (grid.every(row => row[i].classList.contains('bg-green-400'))) bingo = true;
+                    }
+                    // Check diagonals
+                    if ((grid[0][0].classList.contains('bg-green-400') && grid[1][1].classList.contains('bg-green-400') && grid[2][2].classList.contains('bg-green-400')) ||
+                        (grid[0][2].classList.contains('bg-green-400') && grid[1][1].classList.contains('bg-green-400') && grid[2][0].classList.contains('bg-green-400'))) {
+                        bingo = true;
+                    }
+
+                    if (bingo) {
+                        document.getElementById('bingo-message').textContent = 'BINGO!';
+                        document.getElementById('call-word-btn').disabled = true;
+                    }
+                }
+
+                generateBingoCard();
+                renderBingoCard();
+            }
+
+            function setupOrganizandoRotina(container) {
+                const tasks = [
+                    { id: 't1', text: 'Tomar banho', icon: '🧼' },
+                    { id: 't2', text: 'Escovar os dentes', icon: '🦷' },
+                    { id: 't3', text: 'Comer frutas', icon: '🍎' },
+                    { id: 't4', text: 'Praticar esporte', icon: '⚽' },
+                    { id: 't5', text: 'Dormir bem', icon: '😴' }
+                ].sort(() => 0.5 - Math.random());
+
+                container.innerHTML = `
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div id="task-pool" class="w-full md:w-1/3 bg-slate-100 p-4 rounded-lg">
+                            <h4 class="font-bold mb-4 text-center">Tarefas</h4>
+                            <div class="flex flex-col gap-3">
+                                ${tasks.map(task => `
+                                    <div id="${task.id}" class="draggable bg-white p-3 rounded-lg shadow flex items-center gap-3" draggable="true">
+                                        <span class="text-2xl">${task.icon}</span>
+                                        <span class="font-medium">${task.text}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="w-full md:w-2/3 bg-amber-100 p-4 rounded-lg">
+                            <h4 class="font-bold mb-4 text-center">Minha Rotina de Cuidados</h4>
+                            <div id="routine-zone" class="drop-zone p-2 rounded-lg min-h-[300px] flex flex-col gap-3"></div>
+                        </div>
+                    </div>
+                `;
+                
+                let draggedItem = null;
+                container.querySelectorAll('.draggable').forEach(draggable => {
+                    draggable.addEventListener('dragstart', (e) => {
+                        draggedItem = e.target;
+                        setTimeout(() => e.target.style.display = 'none', 0);
+                    });
+                     draggable.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            draggedItem.style.display = 'flex';
+                            draggedItem = null;
+                        }, 0);
+                    });
+                });
+                
+                const dropZone = container.querySelector('#routine-zone');
+                dropZone.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    dropZone.classList.add('over');
+                });
+                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+                dropZone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    dropZone.classList.remove('over');
+                    if (draggedItem) {
+                        dropZone.appendChild(draggedItem);
+                    }
+                });
+            }
+
+            function setupAcoesEConsequencias(container) {
+                const pairs = [
+                    { action: 'Comer muitos doces', consequence: 'Dor de dente 🦷', correctId: 'consequence-a' },
+                    { action: 'Praticar esportes', consequence: 'Corpo forte 💪', correctId: 'consequence-b' },
+                    { action: 'Dormir pouco', consequence: 'Cansaço 😴', correctId: 'consequence-c' },
+                    { action: 'Tomar bastante água', consequence: 'Corpo hidratado 💧', correctId: 'consequence-d' },
+                ].sort(() => 0.5 - Math.random());
+
+                let currentPairIndex = 0;
+
+                function renderPair() {
+                    if (currentPairIndex >= pairs.length) {
+                        container.innerHTML = `<div class="text-center text-xl font-bold text-green-700">Todas as ações e consequências exploradas! 🎉</div>`;
+                        return;
+                    }
+
+                    const pair = pairs[currentPairIndex];
+                    const consequenceOptions = pairs.map(p => ({ id: p.correctId, text: p.consequence })).sort(() => 0.5 - Math.random());
+
+                    container.innerHTML = `
+                        <div class="bg-slate-100 p-6 rounded-lg text-center">
+                            <p class="text-xl font-medium mb-6">Ação: <span class="font-bold text-indigo-700">${pair.action}</span></p>
+                            <div id="consequence-options" class="flex flex-wrap justify-center gap-4 mb-4">
+                                ${consequenceOptions.map(opt => `
+                                    <button class="consequence-btn px-6 py-3 bg-white text-slate-800 rounded-md shadow hover:bg-slate-200" data-id="${opt.id}">${opt.text}</button>
+                                `).join('')}
+                            </div>
+                            <div id="feedback" class="mt-4 h-6 text-lg font-semibold"></div>
+                        </div>
+                    `;
+
+                    container.querySelectorAll('.consequence-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const selectedId = e.target.dataset.id;
+                            const feedbackEl = document.getElementById('feedback');
+                            if (selectedId === pair.correctId) {
+                                feedbackEl.textContent = 'Correto! ✅';
+                                feedbackEl.className = 'mt-4 h-6 text-lg font-semibold text-green-600';
+                                setTimeout(() => {
+                                    currentPairIndex++;
+                                    renderPair();
+                                }, 1500);
+                            } else {
+                                feedbackEl.textContent = 'Tente novamente. ❌';
+                                feedbackEl.className = 'mt-4 h-6 text-lg font-semibold text-red-600';
+                            }
+                        });
+                    });
+                }
+                renderPair();
+            }
+
+            function setupDetetiveDePalavras(container) {
+                const textSnippet = `O verso "é preciso pedir aos deuses uma mente sadia em um corpo saudável" (que traz a famosa máxima mens sana in corpore sano), do poeta romano Juvenal, nascido no século I, é frequentemente repetido ao longo do tempo e nos ajuda a compreender a relação entre corpo, saúde e espírito para a cultura greco-romana - que considera todos esses aspectos igualmente importantes. No Budismo, o corpo é visto como algo impermanente, sujeito a mudanças como envelhecimento, doença e morte, mas que deve ser cuidado. Nas tradições afro-brasileiras, a corporeidade vai além da condição física ou estética: é vista como o principal elo entre o ser humano e o Sagrado, pois é a morada dos orixás e a janela de comunicação entre a humanidade e as divindades.`;
+                const targetWords = ['corpo', 'saúde', 'espírito', 'budismo', 'impermanente', 'orixás', 'sagrado'];
+                let foundWords = new Set();
+
+                function renderText() {
+                    const words = textSnippet.split(/(\s+|[,.:;?!"])/).filter(Boolean); // Split keeping delimiters
+                    let html = `<p class="text-lg leading-relaxed bg-slate-100 p-6 rounded-lg mb-6">`;
+                    words.forEach((wordPart, index) => {
+                        const cleanWord = wordPart.toLowerCase().replace(/[^a-z0-9à-ú]/g, '');
+                        if (targetWords.includes(cleanWord)) {
+                            html += `<span class="selectable-word" data-word="${cleanWord}">${wordPart}</span>`;
+                        } else {
+                            html += wordPart;
+                        }
+                    });
+                    html += `</p>`;
+
+                    html += `<div class="flex flex-col items-center">
+                        <h4 class="font-bold mb-3">Palavras a encontrar:</h4>
+                        <div id="target-words-display" class="flex flex-wrap gap-2 mb-4">
+                            ${targetWords.map(word => `<span id="target-${word}" class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-semibold">${word}</span>`).join('')}
+                        </div>
+                        <div id="detection-feedback" class="text-lg font-semibold h-6"></div>
+                    </div>`;
+                    
+                    container.innerHTML = html;
+
+                    container.querySelectorAll('.selectable-word').forEach(span => {
+                        span.addEventListener('click', () => {
+                            const word = span.dataset.word;
+                            const feedbackEl = document.getElementById('detection-feedback');
+                            if (targetWords.includes(word) && !foundWords.has(word)) {
+                                span.classList.add('selected', 'correct-selected');
+                                foundWords.add(word);
+                                document.getElementById(`target-${word}`).classList.add('bg-green-500', 'text-white');
+                                feedbackEl.textContent = `Encontrou: "${word}" ✅`;
+                                feedbackEl.className = 'text-lg font-semibold h-6 text-green-600';
+                            } else if (foundWords.has(word)) {
+                                feedbackEl.textContent = `"${word}" já foi encontrada.`;
+                                feedbackEl.className = 'text-lg font-semibold h-6 text-orange-600';
+                            } else {
+                                feedbackEl.textContent = `Esta não é uma das palavras-chave. ❌`;
+                                feedbackEl.className = 'text-lg font-semibold h-6 text-red-600';
+                                span.classList.add('incorrect-selected');
+                                setTimeout(() => span.classList.remove('incorrect-selected'), 1000);
+                            }
+                            if (foundWords.size === targetWords.length) {
+                                feedbackEl.textContent = 'Parabéns, você encontrou todas as palavras! 🎉';
+                                feedbackEl.className = 'text-lg font-semibold h-6 text-green-700';
+                            }
+                        });
+                    });
+                }
+                renderText();
+            }
+
+            function init() {
+                createActivityCards();
+                showMainMenu();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
